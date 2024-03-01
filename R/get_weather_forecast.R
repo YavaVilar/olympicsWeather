@@ -111,44 +111,23 @@ address_to_gps <- function(location) {
 coordinates <- get_gps_coordinate("1600 Amphitheatre Parkway, Mountain View, CA")
 print(coordinates)
 
-##Fonction character
+#########Fonction générique
 
-# Función específica para obtener pronósticos a partir de direcciones
-
-
-
-#' get_forecast.character
+#' get_forecast
 #'
-#' @param address
+#' @param location
 #'
 #' @return un dataframe
 #' @export
 #'
-#'
-get_forecast.character <- function(address) {
-  # Verificar que la entrada sea una cadena de caracteres de tamaño 1
-  if (!is.character(address) || length(address) != 1) {
-    stop("L'entrée doit être une chaîne de caractères de taille 1.")
-  }
-
-  # Convertir la dirección en coordenadas GPS utilizando get_gps_coordinate
-  coordinates <- get_gps_coordinate(address)
-
-  # Llamar a get_forecast.numeric con las coordenadas para obtener los pronósticos
-  return(get_forecast.numeric(coordinates))
+#' @examples get_forecast("Paris")
+get_forecast <- function(location) {
+  UseMethod("get_forecast", location)
 }
 
-# Ejemplo de uso
-address <- "1600 Amphitheatre Parkway, Mountain View, CA"
-forecast_address <- get_forecast.character(address)
-print(forecast_address)
-
+get_forecast("1600 Amphitheatre Parkway, Mountain View, CA")
 
 #######Fonction numérique
-
-
-
-# Función específica para obtener pronósticos a partir de coordenadas GPS
 #' get_forecast.numeric
 #'
 #' @param coordinates
@@ -177,20 +156,38 @@ forecast_coordinates <- get_forecast.numeric(coordinates)
 print(forecast_coordinates)
 
 
-#########Fonction générique
 
-#' get_forecast
+
+##Fonction character
+
+#' get_forecast.character
 #'
-#' @param location
+#' @param address
 #'
 #' @return un dataframe
 #' @export
 #'
-#' @examples get_forecast("Paris")
-get_forecast <- function(location) {
-  UseMethod("get_forecast", location)
+#'
+get_forecast.character <- function(address) {
+  # Verificar que la entrada sea una cadena de caracteres de tamaño 1
+  if (!is.character(address) || length(address) != 1) {
+    stop("L'entrée doit être une chaîne de caractères de taille 1.")
+  }
+
+  # Convertir la dirección en coordenadas GPS utilizando get_gps_coordinate
+  coordinates <- get_gps_coordinate(address)
+
+  # Llamar a get_forecast.numeric con las coordenadas para obtener los pronósticos
+  return(get_forecast.numeric(coordinates))
 }
 
-get_forecast("1600 Amphitheatre Parkway, Mountain View, CA")
+# Ejemplo de uso
+address <- "1600 Amphitheatre Parkway, Mountain View, CA"
+forecast_address <- get_forecast.character(address)
+print(forecast_address)
+
+
+
+
 
 
