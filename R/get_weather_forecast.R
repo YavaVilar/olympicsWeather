@@ -107,26 +107,6 @@ address_to_gps <- function(location) {
   }
 }
 
-# Ejemplo de uso
-coordinates <- get_gps_coordinate("1600 Amphitheatre Parkway, Mountain View, CA")
-print(coordinates)
-
-#########Fonction générique
-
-#' get_forecast
-#'
-#' @param location
-#'
-#' @return un dataframe
-#' @export
-#'
-#' @examples get_forecast("Paris")
-get_forecast <- function(location) {
-  UseMethod("get_forecast", location)
-}
-
-get_forecast("1600 Amphitheatre Parkway, Mountain View, CA")
-
 #######Fonction numérique
 #' get_forecast.numeric
 #'
@@ -151,13 +131,6 @@ get_forecast.numeric <- function(coordinates) {
   return(result)
 }
 
-coordinates <- c(37.7749, -122.4194)
-forecast_coordinates <- get_forecast.numeric(coordinates)
-print(forecast_coordinates)
-
-
-
-
 ##Fonction character
 
 #' get_forecast.character
@@ -181,13 +154,20 @@ get_forecast.character <- function(address) {
   return(get_forecast.numeric(coordinates))
 }
 
-# Ejemplo de uso
-address <- "1600 Amphitheatre Parkway, Mountain View, CA"
-forecast_address <- get_forecast.character(address)
-print(forecast_address)
 
 
+#########Fonction générique
 
-
+#' get_forecast
+#'
+#' @param location
+#'
+#' @return un dataframe
+#' @export
+#'
+#' @examples get_forecast("Paris")
+get_forecast <- function(location) {
+  UseMethod("get_forecast", location)
+}
 
 
