@@ -1,0 +1,196 @@
+library(httr2)
+library(tibble)
+library(tidygeocoder)
+
+url <- "https://api.open-meteo.com/v1/forecast"
+
+request(url) |>
+  req_url_query(latitude=48.85, longitude=2.35, hourly=c("temperature_2m", "apparent_temperature", "precipitation_probability", "precipitation"), .multi = "comma") |>
+  req_perform() |> #On exécute la demande
+  resp_body_json() |>
+  as_tibble() |>
+  View()
+
+
+perform_request <- function(lat, long) {
+  url <- "https://api.open-meteo.com/v1/forecast"
+  response_table <-
+    request(url) |>
+    req_url_query(latitude=lat, longitude=long, hourly=c("temperature_2m", "apparent_temperature", "precipitation_probability", "precipitation"), .multi="comma") |>
+    req_perform () |>
+    resp_body_json() |>
+    tibble::as.tibble()
+  return(response_table)
+}
+
+
+##8
+
+resp <- perform_request(48.85, 2.35)
+
+str(resp$hourly[2][[1]], 1)
+
+unlist(resp$hourly[2][[1]], 1)
+
+unnest_data <- function(resp){
+tibble(data_heure=unlist(resp$hourly[1][[1]]),
+         temperature_celsius=unlist(resp$hourly[2][[1]]),
+         temperature_ressentie_celsius=unlist(resp$hourly[3][[1]]),
+         precipitation_proba=unlist(resp$hourly[4][[1]]),
+         precipitation=unlist(resp$hourly[5][[1]]))
+}
+
+perform_request(48.85, 3.35) |>  unnest_data() -> y
+plot(y$temperature_celsius)
+
+##9
+
+usethis::use_test("unnest_response")
+data_test <- y[c(1:5),]
+library(testthat)
+
+##############question 10#################
+
+# Función para convertir una dirección en coordenadas GPS
+# Definir la función address_to_gps
+
+address_to_gps <- function(location) {
+  # dataframe temporaire pour utilisation de geocode
+  df_temp <- data.frame(address = location, stringsAsFactors = FALSE)
+
+  # Appel à geocode avec le dataframe temporaire
+  result <- geocode(
+    .tbl = df_temp,
+    address = "address",
+    method = 'osm',
+    limit = 1
+  )
+  # Vérifie si des coordonnées ont été trouvées
+  if(nrow(result) > 0 && !is.na(result$lat[1]) && !is.na(result$long[1])) {
+    return(c(result$lat[1], result$long[1]))
+  } else {
+    # Retourne une erreur si aucune coordonnée n'a été trouvée
+    return("Aucune coordonnée GPS trouvée pour l'adresse fournie.")
+  }
+}
+
+address_to_gps("Paris")
+
+get_forecast <- function(latitude, longitude){
+
+}
+
+
+get_gps_coordinate <- function(address) {
+  address_to_gps(address)
+}
+
+# Función interna para convertir una dirección en coordenadas GPS
+address_to_gps <- function(location) {
+  # Dataframe temporal para usar con geocode
+  df_temp <- data.frame(address = location, stringsAsFactors = FALSE)
+
+  # Llamada a geocode con el dataframe temporal
+  result <- geocode(
+    .tbl = df_temp,
+    address = "address",
+    method = 'osm',
+    limit = 1
+  )
+
+  # Verificar si se encontraron coordenadas
+  if (nrow(result) > 0 && !is.na(result$lat[1]) && !is.na(result$long[1])) {
+    return(c(result$lat[1], result$long[1]))
+  } else {
+    # Lanzar un error si no se encontraron coordenadas
+    stop("No se encontraron coordenadas GPS para la dirección proporcionada.")
+  }
+}
+
+# Ejemplo de uso
+coordinates <- get_gps_coordinate("1600 Amphitheatre Parkway, Mountain View, CA")
+print(coordinates)
+
+##Fonction character
+
+# Función específica para obtener pronósticos a partir de direcciones
+
+
+
+#' get_forecast.character
+#'
+#' @param address
+#'
+#' @return un dataframe
+#' @export
+#'
+#'
+get_forecast.character <- function(address) {
+  # Verificar que la entrada sea una cadena de caracteres de tamaño 1
+  if (!is.character(address) || length(address) != 1) {
+    stop("L'entrée doit être une chaîne de caractères de taille 1.")
+  }
+
+  # Convertir la dirección en coordenadas GPS utilizando get_gps_coordinate
+  coordinates <- get_gps_coordinate(address)
+
+  # Llamar a get_forecast.numeric con las coordenadas para obtener los pronósticos
+  return(get_forecast.numeric(coordinates))
+}
+
+# Ejemplo de uso
+address <- "1600 Amphitheatre Parkway, Mountain View, CA"
+forecast_address <- get_forecast.character(address)
+print(forecast_address)
+
+
+#######Fonction numérique
+
+
+
+# Función específica para obtener pronósticos a partir de coordenadas GPS
+#' get_forecast.numeric
+#'
+#' @param coordinates
+#'
+#' @return un dataframe
+#' @export
+#'
+#'
+get_forecast.numeric <- function(coordinates) {
+  # Vérifier que l'entrée est un vecteur numérique de taille 2
+  if (!is.numeric(coordinates) || length(coordinates) != 2) {
+    stop("L'entrée doit être un vecteur numérique de taille 2.")
+  }
+
+  # Utiliser perform_request pour interroger une API météo avec les coordonnées
+  weather_data <- perform_request(coordinates[1], coordinates[2])
+
+  # Utiliser unnest_response pour structurer la réponse en un tibble lisible
+  result <- unnest_data(weather_data)
+
+  return(result)
+}
+
+coordinates <- c(37.7749, -122.4194)
+forecast_coordinates <- get_forecast.numeric(coordinates)
+print(forecast_coordinates)
+
+
+#########Fonction générique
+
+#' get_forecast
+#'
+#' @param location
+#'
+#' @return un dataframe
+#' @export
+#'
+#' @examples get_forecast("Paris")
+get_forecast <- function(location) {
+  UseMethod("get_forecast", location)
+}
+
+get_forecast("1600 Amphitheatre Parkway, Mountain View, CA")
+
+
