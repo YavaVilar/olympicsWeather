@@ -2,7 +2,7 @@ Package: olympicsWeather
 Title: Prédiction des météos
 Version: 0.0.0.9000
 Authors@R: 
-    person("YavaVilar", email = "vilarvaleray@gmail.com", role=c("aut"))
+    person("YavaVilar", email = "vilarvaleray@gmail.com", role=c("aut", "cre", "maint"))
 Description: Ce package récupère la météo en temps réel des différents sites olympiques existants.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
