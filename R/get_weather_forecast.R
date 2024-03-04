@@ -1,6 +1,7 @@
 library(httr2)
 library(tibble)
 library(tidygeocoder)
+library(plotly)
 
 ###-----------------------###
 #     Demander l'API        #
@@ -174,34 +175,27 @@ get_forecast <- function(location) {
 #' @export
 #' @import plotly
 visualiser_pronostic <- function(pronostic){
+  p1 <- plot_ly(pronostic, x = ~data_heure, y = ~temperature_celsius, type = 'scatter', mode = 'lines', name = 'Température (°C)') %>%
+    layout(xaxis = list(showticklabels = FALSE))  # Desactivar las etiquetas del eje x para el gráfico superior izquierdo
 
-    p1 <- plot_ly(pronostic, x = ~data_heure, y = ~temperature_celsius, type = 'scatter', mode = 'lines', name = 'Température (°C)') %>%
-      layout(title = "Température",
-             xaxis = list(showticklabels = FALSE),
-             yaxis = list(title = "Température (°C)"),
-             hovermode = "x unified")
+  p2 <- plot_ly(pronostic, x = ~data_heure, y = ~temperature_ressentie_celsius, type = 'scatter', mode = 'lines', name = 'Température ressentie (°C)')%>%
+    layout(xaxis = list(showticklabels = FALSE))
 
-    p2 <- plot_ly(pronostic, x = ~data_heure, y = ~temperature_ressentie_celsius, type = 'scatter', mode = 'lines', name = 'Température ressentie (°C)') %>%
-      layout(title = "Température ressentie",
-             xaxis = list(showticklabels = FALSE),
-             yaxis = list(title = "Température ressentie (°C)"),
-             hovermode = "x unified")
+  p3 <- plot_ly(pronostic, x = ~data_heure, y = ~precipitation, type = 'scatter', mode = 'bars', name = 'Précipitation (mm)') %>%
+    layout(title = "Précipitation",
+           xaxis = list(title = "Date et Heure"),
+           yaxis = list(title = "Précipitation (mm)"),
+           hovermode = "x unified")
 
-    p3 <- plot_ly(pronostic, x = ~data_heure, y = ~precipitation, type = 'scatter', mode = 'bars', name = 'Précipitation (mm)') %>%
-      layout(title = "Précipitation",
-             xaxis = list(title = "Date et Heure"),
-             yaxis = list(title = "Précipitation (mm)"),
-             hovermode = "x unified")
+  p4 <- plot_ly(pronostic, x = ~data_heure, y = ~precipitation_proba, type = 'scatter', mode = 'bars', name = 'Probabilité de précipitation (%)') %>%
+    layout(title = "Prévision de la météo à 7 jours",
+           xaxis = list(title = "Date et Heure"),
+           yaxis = list(title = "Probabilité de précipitation (%)"),
+           hovermode = "x unified")
 
-    p4 <- plot_ly(pronostic, x = ~data_heure, y = ~precipitation_proba, type = 'scatter', mode = 'bars', name = 'Probabilité de précipitation (%)') %>%
-      layout(title = "Prévision de la météo à 7 jours",
-             xaxis = list(title = "Date et Heure"),
-             yaxis = list(title = "Probabilité de précipitation (%)"),
-             hovermode = "x unified")
-
-    subplot(p1, p2, p3, p4, nrows = 2, titleX = FALSE) %>%
-      layout(legend = list(traceorder = 'normal', tracegroupgap = 5))
-  }
+  subplot(p1, p2, p3, p4, nrows = 2, titleX = FALSE) %>%
+    layout(legend = list(traceorder = 'normal', tracegroupgap = 5), xaxis = list(showticklabels = FALSE))
+}
 
 
 #' get_forecast_visualisation
@@ -221,3 +215,7 @@ get_forecast_visualisation <- function(location) {
   # Devuelve una lista con el pronóstico y la visualización
   return(list(pronostic = pronostic, visualisation = visualisation))
 }
+
+
+
+
