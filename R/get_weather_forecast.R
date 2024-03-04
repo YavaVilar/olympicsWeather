@@ -2,6 +2,11 @@ library(httr2)
 library(tibble)
 library(tidygeocoder)
 
+###-----------------------###
+#     Demander l'API        #
+###-----------------------###
+
+
 url <- "https://api.open-meteo.com/v1/forecast"
 
 request(url) |>
@@ -19,12 +24,10 @@ perform_request <- function(lat, long) {
     req_url_query(latitude=lat, longitude=long, hourly=c("temperature_2m", "apparent_temperature", "precipitation_probability", "precipitation"), .multi="comma") |>
     req_perform () |>
     resp_body_json() |>
-    tibble::as.tibble()
+    tibble::as_tibble()
   return(response_table)
 }
 
-
-##8
 
 resp <- perform_request(48.85, 2.35)
 
@@ -43,16 +46,17 @@ tibble(data_heure=unlist(resp$hourly[1][[1]]),
 perform_request(48.85, 3.35) |>  unnest_data() -> y
 plot(y$temperature_celsius)
 
-##9
+###------------------------###
+#     Tests de la fontion    #
+###------------------------###
 
 usethis::use_test("unnest_response")
 data_test <- y[c(1:5),]
 library(testthat)
 
-##############question 10#################
-
-# Función para convertir una dirección en coordenadas GPS
-# Definir la función address_to_gps
+###-----------------------###
+#      Adress en GPS        #
+###-----------------------###
 
 address_to_gps <- function(location) {
   # dataframe temporaire pour utilisation de geocode
@@ -74,40 +78,21 @@ address_to_gps <- function(location) {
   }
 }
 
-address_to_gps("Paris")
-
-get_forecast <- function(latitude, longitude){
-
-}
+###-----------------------------------###
+#      Fct interne Adress en GPS        #
+###-----------------------------------###
 
 
 get_gps_coordinate <- function(address) {
   address_to_gps(address)
 }
 
-# Función interna para convertir una dirección en coordenadas GPS
-address_to_gps <- function(location) {
-  # Dataframe temporal para usar con geocode
-  df_temp <- data.frame(address = location, stringsAsFactors = FALSE)
 
-  # Llamada a geocode con el dataframe temporal
-  result <- geocode(
-    .tbl = df_temp,
-    address = "address",
-    method = 'osm',
-    limit = 1
-  )
+###-----------------------###
+#     Fonction numérique    #
+###-----------------------###
 
-  # Verificar si se encontraron coordenadas
-  if (nrow(result) > 0 && !is.na(result$lat[1]) && !is.na(result$long[1])) {
-    return(c(result$lat[1], result$long[1]))
-  } else {
-    # Lanzar un error si no se encontraron coordenadas
-    stop("No se encontraron coordenadas GPS para la dirección proporcionada.")
-  }
-}
 
-#######Fonction numérique
 #' get_forecast.numeric
 #'
 #' @param coordinates
@@ -131,7 +116,9 @@ get_forecast.numeric <- function(coordinates) {
   return(result)
 }
 
-##Fonction character
+###-----------------------###
+#     Fonction caractère    #
+###-----------------------###
 
 #' get_forecast.character
 #'
@@ -156,18 +143,81 @@ get_forecast.character <- function(address) {
 
 
 
-#########Fonction générique
+###-----------------------###
+#     Fonction générique    #
+###-----------------------###
+
 
 #' get_forecast
 #'
-#' @param location
+#' @param location(coordonnées_géographiques_ou_nom_du_site)
 #'
 #' @return un dataframe
 #' @export
-#'
-#' @examples get_forecast("Paris")
+#' @import tidygeocoder httr2 tibble
 get_forecast <- function(location) {
   UseMethod("get_forecast", location)
 }
 
 
+
+###------------------###
+#     Point bonus      #
+###------------------###
+
+
+#' visualiser_pronostic
+#'
+#' @param pronostic
+#'
+#' @return quatre graphiques intéractifs
+#' @export
+#' @import plotly
+visualiser_pronostic <- function(pronostic){
+
+    p1 <- plot_ly(pronostic, x = ~data_heure, y = ~temperature_celsius, type = 'scatter', mode = 'lines', name = 'Température (°C)') %>%
+      layout(title = "Température",
+             xaxis = list(showticklabels = FALSE),
+             yaxis = list(title = "Température (°C)"),
+             hovermode = "x unified")
+
+    p2 <- plot_ly(pronostic, x = ~data_heure, y = ~temperature_ressentie_celsius, type = 'scatter', mode = 'lines', name = 'Température ressentie (°C)') %>%
+      layout(title = "Température ressentie",
+             xaxis = list(showticklabels = FALSE),
+             yaxis = list(title = "Température ressentie (°C)"),
+             hovermode = "x unified")
+
+    p3 <- plot_ly(pronostic, x = ~data_heure, y = ~precipitation, type = 'scatter', mode = 'bars', name = 'Précipitation (mm)') %>%
+      layout(title = "Précipitation",
+             xaxis = list(title = "Date et Heure"),
+             yaxis = list(title = "Précipitation (mm)"),
+             hovermode = "x unified")
+
+    p4 <- plot_ly(pronostic, x = ~data_heure, y = ~precipitation_proba, type = 'scatter', mode = 'bars', name = 'Probabilité de précipitation (%)') %>%
+      layout(title = "Prévision de la météo à 7 jours",
+             xaxis = list(title = "Date et Heure"),
+             yaxis = list(title = "Probabilité de précipitation (%)"),
+             hovermode = "x unified")
+
+    subplot(p1, p2, p3, p4, nrows = 2, titleX = FALSE) %>%
+      layout(legend = list(traceorder = 'normal', tracegroupgap = 5))
+  }
+
+
+#' get_forecast_visualisation
+#'
+#' @param location(coordonnées_géographiques_ou_nom_du_site)
+#'
+#' @return quatre graphiques intéractifs
+#' @export
+#' @import plotly
+get_forecast_visualisation <- function(location) {
+  # Logica para obtener los datos de la API
+  pronostic <- get_forecast(location)
+
+  # Llama a la función de visualización y pasa los datos del pronóstico
+  visualisation <- visualiser_pronostic(pronostic)
+
+  # Devuelve una lista con el pronóstico y la visualización
+  return(list(pronostic = pronostic, visualisation = visualisation))
+}
