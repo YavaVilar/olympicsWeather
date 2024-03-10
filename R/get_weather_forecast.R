@@ -47,6 +47,10 @@ tibble(data_heure=unlist(resp$hourly[1][[1]]),
 perform_request(48.85, 3.35) |>  unnest_data() -> y
 plot(y$temperature_celsius)
 
+#Le tableau (tibble) comprend des informations générales liées à la demande météorologique ainsi qu'à l'emplacement des prévisions. 
+#Il inclut des détails tels que la latitude, la longitude, l'heure de génération, le décalage UTC, le fuseau horaire, et d'autres éléments. Ce tableau est constitué de 5 lignes et 9 colonnes.
+#La colonne "hourly" se présente sous forme de liste, englobant diverses données telles que l'heure (time), la température à 2 mètres (temperature_2m), la sensation thermique (apparent_temperature), la probabilité de précipitations (precipitation_probability), et les précipitations effectives (precipitation). Pour obtenir des prévisions pour tous les sites des Jeux Olympiques, des ajustements sont requis pour les coordonnées de latitude et de longitude
+
 ###------------------------###
 #     Tests de la fontion    #
 ###------------------------###
@@ -54,6 +58,28 @@ plot(y$temperature_celsius)
 usethis::use_test("unnest_response")
 data_test <- y[c(1:5),]
 library(testthat)
+
+# 1: Vérification du nombre de lignes pour une prévision de 7 jours
+test_that("La fonction renvoie le bon nombre de lignes", {
+  expect_equal(nrow(data_test), 168, info = "Le résultat devrait contenir 168 lignes.")
+})
+
+# 2: Vérification du nom des colonnes en sortie  
+expected_columns <- c("date_heure", "temperature_celsius", "temperature_ressentie", "precipitation_proba", "precipitation_mm")
+expect_equal(names(data_test), expected_columns, info = "Les noms des colonnes devraient correspondre à ceux du dataframe.")
+
+# 3: Vérification des valeurs de la colonne temperature
+test_that("Les valeurs de la colonne temperature correspondent aux valeurs proposées en entrée", {
+  # Supongamos que tienes un vector de temperaturas de entrada llamado 'temperatures_input'
+  expect_equal(data_test$temperature_celsius, temperatures_input, 
+               info = "Les valeurs de la colonne temperature devraient correspondre aux valeurs proposées en entrée.")
+})
+
+# 4: Vérification du nombre de colonnes en sortie
+test_that("Le nombre de colonnes en sortie est correct", {
+  expect_equal(ncol(data_test), length(expected_columns), 
+               info = "Le nombre de colonnes en sortie devrait être égal à celui du vecteur 'expected_columns'.")
+})
 
 ###-----------------------###
 #      Adress en GPS        #
@@ -206,13 +232,8 @@ visualiser_pronostic <- function(pronostic){
 #' @export
 #' @import plotly
 get_forecast_visualisation <- function(location) {
-  # Logica para obtener los datos de la API
   pronostic <- get_forecast(location)
-
-  # Llama a la función de visualización y pasa los datos del pronóstico
   visualisation <- visualiser_pronostic(pronostic)
-
-  # Devuelve una lista con el pronóstico y la visualización
   return(list(pronostic = pronostic, visualisation = visualisation))
 }
 
